@@ -1,0 +1,66 @@
+docker-compose file
+==============================
+version: '3'
+
+services:
+  mariadb-node1:
+    image: mariadb:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_USER: user
+      MYSQL_PASSWORD: user_password
+      MYSQL_DATABASE: exampledb
+      GALERA_CLUSTER: "true"
+      GALERA_CLUSTER_BOOTSTRAP: "true"
+      GALERA_CLUSTER_ADDRESS: "gcomm://mariadb-node1,mariadb-node2,mariadb-node3"
+    volumes:
+      - ./node1/data:/var/lib/mysql
+      - ./node1/mysql:/etc/mysql/conf.d
+    ports:
+      - "3306:3306"
+    networks:
+      - galera
+
+  mariadb-node2:
+    image: mariadb:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_USER: user
+      MYSQL_PASSWORD: user_password
+      MYSQL_DATABASE: exampledb
+      GALERA_CLUSTER: "true"
+      GALERA_CLUSTER_BOOTSTRAP: "false"
+      GALERA_CLUSTER_ADDRESS: "gcomm://mariadb-node1,mariadb-node2,mariadb-node3"
+    volumes:
+      - ./node2/data:/var/lib/mysql
+      - ./node2/mysql:/etc/mysql/conf.d
+    depends_on:
+      - mariadb-node1
+    networks:
+      - galera
+
+  mariadb-node3:
+    image: mariadb:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_USER: user
+      MYSQL_PASSWORD: user_password
+      MYSQL_DATABASE: exampledb
+      GALERA_CLUSTER: "true"
+      GALERA_CLUSTER_BOOTSTRAP: "false"
+      GALERA_CLUSTER_ADDRESS: "gcomm://mariadb-node1,mariadb-node2,mariadb-node3"
+    volumes:
+      - ./node3/data:/var/lib/mysql
+      - ./node3/mysql:/etc/mysql/conf.d
+    depends_on:
+      - mariadb-node1
+    networks:
+      - galera
+
+networks:
+  galera:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: "172.22.0.0/16"
