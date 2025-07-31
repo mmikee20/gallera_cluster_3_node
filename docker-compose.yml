@@ -18,6 +18,8 @@ services:
       - "3306:3306"
     networks:
       - galera
+    command: --wsrep-new-cluster
+
 
   mariadb-node2:
     image: mariadb:latest
@@ -34,6 +36,8 @@ services:
       - ./node2/mysql:/etc/mysql/conf.d
     depends_on:
       - mariadb-node1
+    ports:
+      - "3307:3306"
     networks:
       - galera
 
@@ -52,6 +56,8 @@ services:
       - ./node3/mysql:/etc/mysql/conf.d
     depends_on:
       - mariadb-node1
+    ports:
+      - "3308:3306"
     networks:
       - galera
 
