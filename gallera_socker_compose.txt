@@ -1,5 +1,5 @@
 docker-compose file
-==============================
+========================================================================================================================================================
 version: '3'
 
 services:
@@ -64,3 +64,86 @@ networks:
       driver: default
       config:
         - subnet: "172.22.0.0/16"
+
+========================================================================================================================================================
+
+
+Build a 3 node Galera cluster locally
+Ticket: https://hfmarkets.atlassian.net/browse/DEVOPS-10485
+=======================================================================
+
+Through configuring a mariadb Galera cluster, you will also learn database clustering, replication, and high availability strategies, gaining insights into maintaining data consistency and fault tolerance in distributed systems
+
+
+Galera Cluster is a synchronous multi-master replication solution for MySQL and MariaDB databases. It allows for multiple nodes in a cluster to be active for both read and write operations, ensuring high availability and no data loss. 
+This contrasts with traditional master-slave replication where only one node can handle writes. 
+Key Features:
+
+Synchronous Replication:
+Changes made on one node are immediately replicated to all other nodes in the cluster before the transaction is committed. This guarantees data consistency across all nodes. 
+
+Multi-Master (Active-Active):
+Any node in the cluster can handle both read and write operations, providing load balancing and high availability. 
+
+Automatic Node Joining and Membership Control:
+New nodes can join the cluster automatically, and failed nodes are automatically removed, ensuring seamless operation. 
+
+Parallel Replication:
+Replication happens at the row level, enabling faster replication and reducing lag. 
+
+No Data Loss:
+Due to synchronous replication, there's no data loss if a node fails, as all changes are applied to other nodes before the transaction is committed. 
+
+Compatibility:
+Galera Cluster can be used with both MySQL and MariaDB, with MariaDB including it natively since the 10.0 releases. 
+
+
+Synchronous vs Asynchronous
+=============================
+Synchronous:
+Suitable for simple tasks where sequential execution is acceptable and order matters.
+Asynchronous:
+Beneficial for tasks that can be performed independently and where parallel execution improves performance. 
+
+
+conf_mysql file
+================
+
+Explanation of conf_mysql parameters:
+
+bind-address = 0.0.0.0: Allows the MySQL server to listen on all available network interfaces, which is necessary for inter-container communication within Docker.
+
+wsrep_on=ON: Enables the Galera replication plugin.
+
+wsrep_provider=/usr/lib/galera/libgalera_smm.so: Specifies the path to the Galera replication library.
+
+wsrep_cluster_address=gcomm://mariadb-node1,mariadb-node2,mariadb-node3: Defines the addresses of all nodes in the cluster. This is crucial for initial discovery and communication.
+
+wsrep_cluster_name="my_galera_cluster": A logical name for your cluster. All nodes must have the same cluster name to join.
+
+wsrep_sst_method=rsync: Sets the State Snapshot Transfer (SST) method. rsync is a common and reliable method for transferring data from a donor node to a joining node.
+
+wsrep_node_address: The IP address or hostname of the current node. This helps Galera identify the node within the cluster. Using the Docker service names (mariadb-nodeX) is ideal here.
+
+wsrep_node_name: A friendly name for the current node.
+
+
+mysql -h 127.0.0.1 -P 3306 -u root -p
+mysql -u root -p -h 127.0.0.1 -P 3306
+
+SHOW STATUS LIKE 'wsrep_cluster_size';
+SHOW STATUS LIKE 'wsrep_local_state_comment';
+
+SHOW DATABASES;
+CREATE TABLE michalism.michalism_policy (id INT NOT NULL AUTO_INCREMENT, PRIMARY KEY(id));
+SELECT * FROM michalism.michalism_policy;
+INSERT INTO michalism.michalism_policy VALUES (1);
+
+
+
+For reference:
+https://www.digitalocean.com/community/tutorials/how-to-configure-a-galera-cluster-with-mariadb-on-centos-7-servers#step-2-installing-mariadb-on-all-servers
+
+
+
+
